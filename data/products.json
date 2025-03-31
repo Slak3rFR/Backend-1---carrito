@@ -1,0 +1,15 @@
+[
+  {
+    "id": 1,
+    "title": "Producto 1",
+    "description": "Descripción del producto 1",
+    "code": "ABC123",
+    "price": 100,
+    "status": true,
+    "stock": 10,
+    "category": "Electrónica",
+    "thumbnails": [
+      "ruta/imagen1.jpg"
+    ]
+  }
+]
