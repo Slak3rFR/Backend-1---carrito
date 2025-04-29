@@ -11,5 +11,16 @@
     "thumbnails": [
       "ruta/imagen1.jpg"
     ]
+  },
+  {
+    "id": 2,
+    "title": "Prueba1",
+    "description": "Esta es una prueba",
+    "code": "PRUE1",
+    "price": 5000,
+    "status": true,
+    "stock": 10,
+    "category": "Pruebas",
+    "thumbnails": []
   }
 ]
