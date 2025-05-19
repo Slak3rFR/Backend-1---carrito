@@ -1,0 +1,23 @@
+<h1>{{product.title}}</h1>
+<p><strong>Descripción:</strong> {{product.description}}</p>
+<p><strong>Código:</strong> {{product.code}}</p>
+<p><strong>Precio:</strong> ${{product.price}}</p>
+<p><strong>Estado:</strong> {{product.status}}</p>
+<p><strong>Stock:</strong> {{product.stock}}</p>
+<p><strong>Categoría:</strong> {{product.category}}</p>
+<p><strong>Imágenes:</strong>
+    {{#each product.thumbnails}}
+        <img src="{{this}}" alt="Producto" style="max-width: 100px;">
+    {{/each}}
+</p>
+<button onclick="addToCart('{{product._id}}')">Agregar al carrito</button>
+<a href="/products">Volver a productos</a>
+
+<script>
+    function addToCart(productId) {
+        fetch(`/api/carts/123/product/${productId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => alert('Producto agregado al carrito'))
+            .catch(err => alert('Error al agregar al carrito'));
+    }
+</script>

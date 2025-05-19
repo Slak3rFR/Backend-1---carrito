@@ -2,10 +2,13 @@ const express = require('express');
 const { engine } = require('express-handlebars');
 const { Server } = require('socket.io');
 const path = require('path');
-const ProductManager = require('./managers/ProductManager');
+const connectDB = require('./config/db');
+const Product = require('./models/Product');
 
 const app = express();
-const productManager = new ProductManager();
+
+// Conectar a MongoDB
+connectDB();
 
 // Configurar Handlebars
 app.engine('handlebars', engine());
@@ -15,16 +18,7 @@ app.set('views', path.join(__dirname, 'views'));
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Servir archivos estáticos
-
-// Rutas
-const productsRouter = require('./routes/products');
-const cartsRouter = require('./routes/carts');
-const viewsRouter = require('./routes/views');
-
-app.use('/api/products', productsRouter);
-app.use('/api/carts', cartsRouter);
-app.use('/', viewsRouter);
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Configurar servidor
 const PORT = 8080;
@@ -35,32 +29,42 @@ const server = app.listen(PORT, () => {
 // Configurar Socket.io
 const io = new Server(server);
 
-// Manejar conexiones de WebSocket
-io.on('connection', (socket) => {
+// Rutas (mover después de la inicialización de io)
+const productsRouter = require('./routes/products')(io);
+const cartsRouter = require('./routes/carts');
+const viewsRouter = require('./routes/views');
+
+app.use('/api/products', productsRouter);
+app.use('/api/carts', cartsRouter);
+app.use('/', viewsRouter);
+
+// Configurar eventos de Socket.io
+io.on('connection', async (socket) => {
     console.log('Cliente conectado');
+    const products = await Product.find();
+    socket.emit('updateProducts', products);
 
-    // Enviar lista inicial de productos al conectar
-    productManager.getProducts().then(products => {
-        socket.emit('updateProducts', products);
-    });
-
-    // Escuchar evento para agregar producto
     socket.on('addProduct', async (product) => {
         try {
-            await productManager.addProduct(product);
-            const products = await productManager.getProducts();
-            io.emit('updateProducts', products); // Actualizar todos los clientes
+            if (!product.title || !product.description || !product.code || !product.price || product.status === undefined || !product.stock || !product.category) {
+                throw new Error('Missing required fields');
+            }
+            if (product.price < 0 || product.stock < 0) {
+                throw new Error('Price and stock cannot be negative');
+            }
+            const newProduct = await Product.create(product);
+            const products = await Product.find();
+            io.emit('updateProducts', products);
         } catch (error) {
-            socket.emit('error', 'Error al agregar producto');
+            socket.emit('error', error.message);
         }
     });
 
-    // Escuchar evento para eliminar producto
     socket.on('deleteProduct', async (productId) => {
         try {
-            await productManager.deleteProduct(parseInt(productId));
-            const products = await productManager.getProducts();
-            io.emit('updateProducts', products); // Actualizar todos los clientes
+            await Product.findByIdAndDelete(productId);
+            const products = await Product.find();
+            io.emit('updateProducts', products);
         } catch (error) {
             socket.emit('error', 'Error al eliminar producto');
         }

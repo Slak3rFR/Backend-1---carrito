@@ -1,0 +1,52 @@
+<h1>Productos</h1>
+<form id="filterForm">
+    <input type="number" name="limit" placeholder="Límite (10 por defecto)" min="1">
+    <input type="number" name="page" placeholder="Página (1 por defecto)" min="1">
+    <select name="sort">
+        <option value="">Sin orden</option>
+        <option value="asc">Precio ascendente</option>
+        <option value="desc">Precio descendente</option>
+    </select>
+    <input type="text" name="query" placeholder="Categoría o disponibilidad (true/false)">
+    <button type="submit">Filtrar</button>
+</form>
+<ul>
+    {{#each products}}
+        <li>
+            <strong>{{this.title}}</strong> (ID: {{this._id}})<br>
+            Precio: ${{this.price}}<br>
+            Categoría: {{this.category}}<br>
+            Stock: {{this.stock}}<br>
+            <a href="/products/{{this._id}}">Ver detalles</a>
+            <button onclick="addToCart('{{this._id}}')">Agregar al carrito</button>
+        </li>
+    {{/each}}
+</ul>
+<div>
+    {{#if hasPrevPage}}
+        <a href="{{prevLink}}">Página anterior</a>
+    {{/if}}
+    <span>Página {{page}} de {{totalPages}}</span>
+    {{#if hasNextPage}}
+        <a href="{{nextLink}}">Página siguiente</a>
+    {{/if}}
+</div>
+
+<script>
+    function addToCart(productId) {
+        fetch(`/api/carts/123/product/${productId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => alert('Producto agregado al carrito'))
+            .catch(err => alert('Error al agregar al carrito'));
+    }
+
+    document.getElementById('filterForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const params = new URLSearchParams();
+        formData.forEach((value, key) => {
+            if (value) params.append(key, value);
+        });
+        window.location.href = `/products?${params.toString()}`;
+    });
+</script>
