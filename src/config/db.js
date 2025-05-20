@@ -2,10 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        await mongoose.connect('mongodb://localhost:27017/backend-entrega', {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+        await mongoose.connect('mongodb://localhost:27017/backend-entrega');
         console.log('MongoDB connected');
     } catch (error) {
         console.error('MongoDB connection error:', error);

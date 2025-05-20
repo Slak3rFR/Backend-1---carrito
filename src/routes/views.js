@@ -3,6 +3,12 @@ const router = express.Router();
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
 
+// Ruta raíz: redirigir a /products
+router.get('/', (req, res) => {
+    res.redirect('/products');
+});
+
+// Lista de productos con paginación
 router.get('/products', async (req, res) => {
     try {
         const { limit = 10, page = 1, sort, query } = req.query;
@@ -22,7 +28,7 @@ router.get('/products', async (req, res) => {
             limit: parseInt(limit),
             sort: sortOption,
         };
-        const result = await Product.paginate(filter, options);
+        const result = await Product.paginate(filter, { ...options, lean: true });
         res.render('products', {
             products: result.docs,
             totalPages: result.totalPages,
@@ -39,9 +45,10 @@ router.get('/products', async (req, res) => {
     }
 });
 
+// Detalle de producto
 router.get('/products/:pid', async (req, res) => {
     try {
-        const product = await Product.findById(req.params.pid);
+        const product = await Product.findById(req.params.pid).lean();
         if (!product) return res.status(404).send('Product not found');
         res.render('productDetail', { product });
     } catch (error) {
@@ -49,9 +56,10 @@ router.get('/products/:pid', async (req, res) => {
     }
 });
 
+// Carrito
 router.get('/carts/:cid', async (req, res) => {
     try {
-        const cart = await Cart.findById(req.params.cid).populate('products.product');
+        const cart = await Cart.findById(req.params.cid).populate('products.product').lean();
         if (!cart) return res.status(404).send('Cart not found');
         res.render('cart', { cartId: req.params.cid, products: cart.products });
     } catch (error) {
@@ -59,8 +67,9 @@ router.get('/carts/:cid', async (req, res) => {
     }
 });
 
+// Productos en tiempo real
 router.get('/realtimeproducts', async (req, res) => {
-    const products = await Product.find();
+    const products = await Product.find().lean();
     res.render('realTimeProducts', { products });
 });
 

@@ -29,21 +29,20 @@ const server = app.listen(PORT, () => {
 // Configurar Socket.io
 const io = new Server(server);
 
-// Rutas (mover después de la inicialización de io)
+// Rutas
 const productsRouter = require('./routes/products')(io);
 const cartsRouter = require('./routes/carts');
 const viewsRouter = require('./routes/views');
 
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
-app.use('/', viewsRouter);
+app.use('/', viewsRouter); // Esta línea es clave para manejar rutas como /
 
 // Configurar eventos de Socket.io
 io.on('connection', async (socket) => {
     console.log('Cliente conectado');
-    const products = await Product.find();
+    const products = await Product.find().lean();
     socket.emit('updateProducts', products);
-
     socket.on('addProduct', async (product) => {
         try {
             if (!product.title || !product.description || !product.code || !product.price || product.status === undefined || !product.stock || !product.category) {
@@ -53,23 +52,21 @@ io.on('connection', async (socket) => {
                 throw new Error('Price and stock cannot be negative');
             }
             const newProduct = await Product.create(product);
-            const products = await Product.find();
+            const products = await Product.find().lean();
             io.emit('updateProducts', products);
         } catch (error) {
             socket.emit('error', error.message);
         }
     });
-
     socket.on('deleteProduct', async (productId) => {
         try {
             await Product.findByIdAndDelete(productId);
-            const products = await Product.find();
+            const products = await Product.find().lean();
             io.emit('updateProducts', products);
         } catch (error) {
             socket.emit('error', 'Error al eliminar producto');
         }
     });
-
     socket.on('disconnect', () => {
         console.log('Cliente desconectado');
     });
